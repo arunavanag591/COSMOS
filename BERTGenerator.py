@@ -1,5 +1,6 @@
 import pandas as pd
 import numpy as np
+import os
 import re
 import concurrent.futures
 from transformers import BertTokenizer, BertForMaskedLM
@@ -8,13 +9,16 @@ import torch
 from transformers import DistilBertTokenizer, DistilBertForMaskedLM
 
 
+os.environ['TF_ENABLE_ONEDNN_OPTS'] = '0' 
+os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
+
+
 # Load the pre-trained DistilBERT model and tokenizer
 model_name = "distilbert-base-uncased"
 tokenizer = DistilBertTokenizer.from_pretrained(model_name)
+
 model = DistilBertForMaskedLM.from_pretrained(model_name)
 model.eval()
-
-
 
 
 # Different BERT model
@@ -31,8 +35,8 @@ if torch.cuda.is_available():
 
 
 # Load and preprocess data
-dir = '~/DataAnalysis/data/Sprints/HighRes/'
-df = pd.read_hdf(dir+'Windy/WindyMASigned.h5')
+# dir = '~/DataAnalysis/data/Sprints/HighRes/'
+df = pd.read_hdf('../data/WindyMASigned.h5')
 df1=df[15000:18000]
 df1=df1.round(3)
 
@@ -58,8 +62,6 @@ for chunk_index in range(num_chunks):
         text_data += f"Odor encounter: {row['odor']}, Location: ({row['xsrc']}, {row['ysrc']}), U velocity: {row['U']}, V velocity: {row['V']}.\n"
 
 print('Done Chunking process')
-
-
 
 
 def extract_values(generated_text):
