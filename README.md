@@ -1,1 +1,2 @@
-# plume_sim
+# Odor Plume Simulator
+Realistic outdoor odor plume simulator 
