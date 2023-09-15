@@ -69,15 +69,23 @@ def avg_distance(df,index,fdf): #input ; location ; storage
 
 
 def mean_conc(df,index,fdf):
-  #Distance
-  i = 0
-  mean_concentration = []
-  while i<len(index):
-      mean_concentration.append(np.mean(df.odor[index[i]])) 
-      i+=1
-  fdf['mean_concentration']=mean_concentration
+    #Distance
+    i = 0
+    mean_concentration = []
+    while i<len(index):
+        mean_concentration.append(np.mean(df.odor[index[i]])) 
+        i+=1
+    fdf['mean_concentration']=mean_concentration
   
-    
+def mean_conc_p(df,index,fdf):
+    #Distance
+    i = 0
+    mean_concentration = []
+    while i<len(index):
+        mean_concentration.append(np.mean(df.predicted_odor[index[i]])) 
+        i+=1
+    fdf['mean_concentration_p']=mean_concentration
+        
 def whiff_blank_duration(df,index,fdf):
     # time of the encounters
     i = 0
