@@ -56,7 +56,7 @@ def scale_data(data):
 
 
 
-def avg_distance(df,index,fdf): #input ; location ; storage
+def avg_distance(df,index,dat): #input ; location ; storage
   
     #Distance
     i = 0
@@ -64,29 +64,29 @@ def avg_distance(df,index,fdf): #input ; location ; storage
     while i<len(index):
         avg_dist_source.append(np.mean(df.distance_from_source[index[i]])) ## _ is declination corrected distance
         i+=1
-    fdf['avg_dist_from_source']=avg_dist_source
-    fdf['log_avg_dist_from_source']= np.log10(fdf.avg_dist_from_source)
+    dat['avg_dist_from_source']=avg_dist_source
+    dat['log_avg_dist_from_source']= np.log10(dat.avg_dist_from_source)
 
 
-def mean_conc(df,index,fdf):
+def mean_conc(df,index,dat):
     #Distance
     i = 0
     mean_concentration = []
     while i<len(index):
-        mean_concentration.append(np.mean(df.odor[index[i]])) 
+        mean_concentration.append(np.mean(df.scaled_odor[index[i]])) 
         i+=1
-    fdf['mean_concentration']=mean_concentration
+    dat['mean_concentration']=mean_concentration
   
-def mean_conc_p(df,index,fdf):
+def predicted_mean_conc(df,index,dat):
     #Distance
     i = 0
     mean_concentration = []
     while i<len(index):
         mean_concentration.append(np.mean(df.predicted_odor[index[i]])) 
         i+=1
-    fdf['mean_concentration_p']=mean_concentration
+    dat['mean_concentration_p']=mean_concentration
         
-def whiff_blank_duration(df,index,fdf):
+def whiff_blank_duration(df,index,dat):
     # time of the encounters
     i = 0
     length_of_encounter = []
@@ -94,7 +94,7 @@ def whiff_blank_duration(df,index,fdf):
     while i < len(index):
         length_of_encounter.append(dt*(len(index[i])))
         i+=1
-    fdf['length_of_encounter'] = length_of_encounter
+    dat['length_of_encounter'] = length_of_encounter
 
     #time between the encounters
     i = 0
@@ -106,6 +106,6 @@ def whiff_blank_duration(df,index,fdf):
         else:
             intermittency.append(0)
             i+=1
-    fdf['odor_intermittency'] = intermittency
-    fdf['log_whiff']=np.log10(fdf.length_of_encounter)
-    fdf['log_blank']=np.log10(fdf.odor_intermittency)
+    dat['odor_intermittency'] = intermittency
+    dat['log_whiff']=np.log10(dat.length_of_encounter)
+    dat['log_blank']=np.log10(dat.odor_intermittency)

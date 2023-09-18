@@ -46,8 +46,8 @@ def process_file(folder_path, filename):
     new_df['odor']=df.odor
     # new_df['windx']=df.windx
     # new_df['windy']=df.windy
-    # new_df['x']=df.x
-    # new_df['y']=df.y
+    new_df['x']=df.x
+    new_df['y']=df.y
     
     new_df = new_df.iloc[100:]
     new_df.reset_index(drop=True, inplace=True)
