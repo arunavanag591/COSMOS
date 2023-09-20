@@ -257,7 +257,7 @@ def main():
 features = ['distance_along_streakline','nearest_from_streakline']
 target = ['odor']
 seq_length = 5  # Choose a suitable sequence length
-num_epochs = 500  # Choose a suitable number of epochs
+num_epochs = 350  # Choose a suitable number of epochs
 
 # Initialize LSTM model
 input_size = 2  # Number of features

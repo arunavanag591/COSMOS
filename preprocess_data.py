@@ -67,7 +67,7 @@ def process_file(folder_path,filename):
     source = np.array([[0,0]])
     odor_position = np.array([[df.x[i], df.y[i]] for i in range(len(df))])
     distance_from_source = np.array([cdist(odor_position, source)]).flatten()
-    new_df['distance_from_source'] = distance_from_source
+    # new_df['distance_from_source'] = distance_from_source
 
     dt = 0.3
     eastwest, northsouth = find_streakline(df, dt)
