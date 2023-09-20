@@ -111,7 +111,6 @@ def scale_data(data):
 def load_and_preprocess_file(file_path, features, target):
     # Load the data
     df = pd.read_hdf(file_path)
-    df['scaled_odor']=scale_data(df.odor)
     # Scale the features
     scaler = MinMaxScaler()
     df[features] = scaler.fit_transform(df[features])
@@ -238,25 +237,25 @@ def main():
         targets = targets.to(device)
         train_on_single_file_faster(model, optimizer, criterion, sequences, targets, num_epochs)
 
-    torch.save(model.state_dict(), '../assets/models/modelLSTMSept18-500epoch.pth')
+    torch.save(model.state_dict(), '../assets/models/test.pth')
     new_data_path = "/home/beast/An/data/train_new_axis/diag1.h5"
     predictions = predict_on_new_data(model, new_data_path, features, target, seq_length, device)
     test=pd.read_hdf(new_data_path)
     test['predicted_odor']=np.pad(predictions.flatten(),(0, len(test)-len(predictions)),mode='constant')
 
     f,ax=plt.subplots(1,1,figsize=(5,5))
-    ax.plot(scale_data(test.odor), label='scaled measurements')
+    ax.plot(test.odor, label='scaled measurements')
     ax.plot(test.predicted_odor, alpha=0.8,label='predictions')
     ax.set_ylabel('odor, v')
     ax.set_xlabel('samples')
     ax.legend()
-    ax.set_title('200ep/timeseries')
+    ax.set_title('500ep/timeseries')
     f.savefig('../assets/test.jpeg', dpi=150, bbox_inches = "tight")
 
 
 
-features = ['distance_along_streakline','distance_from_source']
-target = ['scaled_odor']
+features = ['distance_along_streakline','nearest_from_streakline']
+target = ['odor']
 seq_length = 5  # Choose a suitable sequence length
 num_epochs = 500  # Choose a suitable number of epochs
 
