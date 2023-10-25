@@ -73,7 +73,7 @@ def mean_conc(df,index,dat):
     i = 0
     mean_concentration = []
     while i<len(index):
-        mean_concentration.append(np.mean(df.scaled_odor[index[i]])) 
+        mean_concentration.append(np.mean(df.odor[index[i]])) 
         i+=1
     dat['mean_concentration']=mean_concentration
   
