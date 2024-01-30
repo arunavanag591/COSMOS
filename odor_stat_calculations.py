@@ -234,8 +234,6 @@ def encounter_frequency_predicted(dataframe,idx_predicted,fdf,kernel_size,tau):
 
 
 
-
-
 ## meta statistic calculation
 
 def get_timed_rows(dataframe,duration_of_encounters):
