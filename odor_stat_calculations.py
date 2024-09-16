@@ -249,6 +249,7 @@ def get_timed_encounter_stats(dataframe, distance_class, duration_of_encounters)
             
     Nrows = get_timed_rows(df_q,duration_of_encounters)
     avg_dist = np.mean(Nrows.avg_dist_from_source)
+    
     mean_time_whiff=np.mean(Nrows.mean_time)
 #     mean_conc=np.mean(Nrows_cont.odor)
     pack_data=np.vstack([Nrows.mean_concentration,Nrows.wf,Nrows.log_whiff,Nrows.whiff_ma,Nrows.std_whiff])
