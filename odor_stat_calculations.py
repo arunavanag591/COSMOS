@@ -40,7 +40,19 @@ def calculate_distance_from_source(df):
 def get_index(data,th):
     idx = []
     for i in range(len(data)):
-        if (data[i]>th):
+        if (data[i]>=th):
+            idx.append(i)
+    
+    index = []
+    for k, g in groupby(enumerate(idx),lambda ix : ix[0] - ix[1]):
+        index.append((list((map(itemgetter(1), g)))))
+    return index
+
+
+def get_index_nowhiff(data,th):
+    idx = []
+    for i in range(len(data)):
+        if (data[i]<th):
             idx.append(i)
     
     index = []
@@ -134,7 +146,8 @@ def encounter_frequency(df,index,fdf,kernel_size,tau):
     for i in range (len(index)):
         start.append(index[i][0])
     df['efreq'] = np.zeros(len(df))
-    df.efreq.iloc[start] = 1
+    # df.efreq.iloc[start] = 1
+    df.loc[df.index[start], 'efreq'] = 1 
 
     ## encounter frequency
     def exp_ker(t, tau):
