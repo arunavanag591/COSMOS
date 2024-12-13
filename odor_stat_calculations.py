@@ -8,11 +8,15 @@ pd.TimeSeries = pd.Series
 
 from itertools import groupby
 from operator import itemgetter
+import matplotlib.pyplot as plt 
 
 #math
 import numpy as np
 from scipy.spatial.distance import cdist
 from scipy import signal
+import seaborn as sns
+from scipy.stats import wasserstein_distance
+from tqdm import tqdm
 
 
 
@@ -280,3 +284,72 @@ def gather_stat_timed(dataframe, distance_class, duration_of_encounters,X,y,D,N,
         T.append(t)
         
     return X,y,D,N,T
+
+## stat tests
+def wd_cal(x_true,y_true, x_pred, y_pred, label1):
+    x_bins = np.linspace(min(x_true.min(), x_pred.min()), max(x_true.max(), x_pred.max()), 30)
+    y_bins = np.linspace(min(y_true.min(), y_pred.min()), max(y_true.max(), y_pred.max()), 30)
+
+    # Compute 2D histograms (normalized)
+    true_hist, _, _ = np.histogram2d(x_true, y_true, bins=[x_bins, y_bins], density=True)
+    pred_hist, _, _ = np.histogram2d(x_pred, y_pred, bins=[x_bins, y_bins], density=True)
+
+    # Flatten the histograms for Wasserstein computation
+    true_flat = true_hist.flatten()
+    pred_flat = pred_hist.flatten()
+
+    # Calculate observed 2D Wasserstein Distance
+    observed_wd_2d = wasserstein_distance(true_flat, pred_flat)
+
+    # Bootstrapping function
+    def bootstrap_wasserstein_2d(true_hist, pred_hist, n_bootstraps=1000):
+        distances = []
+        for _ in tqdm(range(n_bootstraps)):
+            # Resample from the histograms
+            resampled_true = np.random.poisson(true_hist)
+            resampled_pred = np.random.poisson(pred_hist)
+            
+            # Flatten the resampled histograms
+            resampled_true_flat = resampled_true.flatten()
+            resampled_pred_flat = resampled_pred.flatten()
+            
+            # Compute Wasserstein Distance
+            distance = wasserstein_distance(resampled_true_flat, resampled_pred_flat)
+            distances.append(distance)
+        
+        return distances
+
+    n_bootstraps = 1000
+    bootstrap_distances = bootstrap_wasserstein_2d(true_hist, pred_hist, n_bootstraps)
+    p_value = np.mean(np.array(bootstrap_distances) >= observed_wd_2d)
+    plot_wd(bootstrap_distances, observed_wd_2d, p_value, true_hist, pred_hist, label1)
+
+def plot_wd(bootstrap_distances, observed_wd_2d, p_value, true_hist, pred_hist, label1):
+
+    fig, (ax1, ax2, ax3) = plt.subplots(1, 3, figsize=(10, 3.5))
+
+    # Plot 1: Histogram with bootstrap distribution
+    sns.histplot(bootstrap_distances, bins=30, kde=True, color='blue', edgecolor='slategray', linewidth=1.5, ax=ax1)
+    ax1.axvline(observed_wd_2d, color='red', linestyle='--', linewidth=2, label=f'Wd$_{{obs}}$\n(p-value={p_value:.3f})')
+    ax1.set_title('Bootstrap Distribution')
+    ax1.set_xlabel('Wasserstein Distance (Wd)')
+    ax1.set_ylabel('Frequency')
+    ax1.set_ylim(0,100)
+    ax1.legend(loc='upper right')
+
+    # Plot 2: Actual data heatmap
+    sns.heatmap(true_hist.T, ax=ax2, cmap='Reds', cbar=False, xticklabels=[], yticklabels=[])
+    ax2.invert_yaxis()
+    ax2.set_title('Actual Data')
+    ax2.set_xlabel('Distance from Source')
+    ax2.set_ylabel(label1)
+
+    # Plot 3: Predicted data heatmap
+    sns.heatmap(pred_hist.T, ax=ax3, cmap='Reds', cbar_kws={'label': 'Density'}, xticklabels=[], yticklabels=[])
+    ax3.invert_yaxis()
+    ax3.set_title('Predicted Data')
+    ax3.set_xlabel('Distance from Source')
+    ax3.set_ylabel(label1)
+
+    fig.tight_layout()
+
