@@ -20,7 +20,7 @@ flowchart TD
     end
 
     subgraph Concentration["3. Concentration Update"]
-        C1{Is Whiff State & Within Distance?}
+        C1{Is Whiff State}
         C1 -->|Yes| C2[Generate Whiff Sequence]
         C1 -->|No| C3[Generate Background]
         C2 --> C4[Update History]
