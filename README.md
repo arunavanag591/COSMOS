@@ -3,7 +3,8 @@ Realistic outdoor odor plume simulator
 
 
 ### Algorithm
-```
+```mermaid
+
 flowchart TD
     subgraph Initialization["1. Initialization"]
         I1[Initialize Arrays and History Buffers] --> I2[Set model Parameters]
