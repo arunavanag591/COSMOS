@@ -3,39 +3,32 @@ Realistic outdoor odor plume simulator
 
 
 ### Algorithm
-```
-Start
- │
- └─ For Each Time Step `i`:
-       │
-       ├─ Retrieve `prior_prob` from `heatmap`
-       |
-       ├─ Calculate whiff frequency - B = 1+[(n(recent_whiffs)/len(recent_history))] * 2
-       │
-       ├─ Compute `posterior` using - posterior = prior * t_mat * Boost {where t_mat is transition mat}
-       │
-       ├─ Predict Whiff:
-       │    └─ If random number < `posterior`: Whiff Predicted
-       │
-       ├─ Update `recent_history` with prediction
-       │
-       ├─ If Whiff Predicted AND Distance ≤ Threshold:
-       │    ├─ Find Nearest Whiff Location
-       │    ├─ Generate Odor Concentration Values
-       │    ├─ Update `odor_concentration_samples`
-       │    └─ Advance `i` Intermittency Duration
-       │
-       └─ Else:
-            └─ Increment `i` by 1
- │
- └─ Post-Processing for No-Whiff Regions:
-       ├─ Identify Regions with `base_odor_level`
-       ├─ Generate No-Whiff Concentration Values
-       └─ Smooth with Moving Average
- │
- └─ Update `df_test` with Results
- │     ├─ `predicted_odor`
- │     └─ `whiff_predicted`
- │
-End
+```mermaid
+
+flowchart TD
+    subgraph Initialization["1. Initialization"]
+        I1[Initialize Arrays and History Buffers] --> I2[Set model Parameters]
+    end
+
+    subgraph State["2. State Decision"]
+        S1[Get Location & Spatial Probability] --> S2[Calculate Posterior]
+        S2 --> S3{In Whiff State?}
+        S3 -->|Yes| S4[Check Continue Whiff]
+        S3 -->|No| S5[Check Start Whiff]
+        S4 --> S6[Update State]
+        S5 --> S6
+    end
+
+    subgraph Concentration["3. Concentration Update"]
+        C1{Is Whiff State & Within Distance?}
+        C1 -->|Yes| C2[Generate Whiff Sequence]
+        C1 -->|No| C3[Generate Background]
+        C2 --> C4[Update History]
+        C3 --> C4
+    end
+
+    I2 --> S1
+    S6 --> C1
+    C4 --> S1
+
 ```
