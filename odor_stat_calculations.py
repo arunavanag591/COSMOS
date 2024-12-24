@@ -327,7 +327,7 @@ def wd_cal(x_true,y_true, x_pred, y_pred, label1, vmin, vmax):
 
 
 def plot_wd(bootstrap_distances, observed_wd_2d, p_value, true_hist, pred_hist, label1, vmin=None, vmax=None):
-    fig, (ax1, ax2, ax3) = plt.subplots(1, 3, figsize=(12, 4))
+    fig, (ax1, ax2, ax3) = plt.subplots(1, 3, figsize=(10, 3))
 
     # Plot 1: Actual data heatmap in blues
     sns.heatmap(true_hist.T, ax=ax1, cmap='Blues', cbar_kws={'label': 'Density'}, vmin=vmin, vmax=vmax, xticklabels=[], yticklabels=[])
