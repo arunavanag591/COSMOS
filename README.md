@@ -4,60 +4,133 @@ Realistic outdoor odor plume simulator
 
 ### Algorithm
 ```mermaid
-flowchart TD
-    %% Main Simulation Flow
-    subgraph Main["Main Simulation Flow"]
-        Init[1. Initialize System] --> SpatialProb[2. Calculate Spatial Probabilities]
-        SpatialProb --> Predict[3. Prediction Loop]
-        Predict --> Output[4. Post-processing & Output]
+  flowchart TD
+
+    %% -----------------------------
+    %% 1) INPUT DATA
+    %% -----------------------------
+    subgraph InD["Input Data"]
+        A1[Raw Odor Measurements]
+        A2[Wind Velocity]
+        A3[Spatial Coordinates]
     end
 
-    %% Spatial Probability Calculation
-    subgraph SpatialProbCalc["Spatial Probability Calculation"]
-        SP1[Create 2D Histogram] --> SP2[Calculate Probability Field]
-        SP2 --> SP3[Fit Gaussian Plume Model]
-        SP3 --> SP4[Apply Spatial Smoothing]
+    %% -----------------------------
+    %% 2) SPATIAL PROBABILITY MODEL
+    %% -----------------------------
+    subgraph SPM["Spatial Probability Model"]
+        B1[Empirical Bin Probabilities]
+        B2[Gaussian Plume Model]
+        B3[Parameter Optimization]
+        B4[Final Spatial Probability Field]
+
+        B1 --> B2
+        B2 --> B3
+        B3 --> B4
     end
 
-    %% Prediction Process
-    subgraph PredictionLoop["Prediction Process"]
-        P1[Process Segments] --> P2[Update State]
-        P2 --> P3{In Whiff State?}
-        P3 -->|Yes| W1[Generate Whiff]
-        P3 -->|No| B1[Generate Background]
-        W1 --> StateUpdate[Update System State]
-        B1 --> StateUpdate
-        StateUpdate --> P2
+    %% -----------------------------
+    %% 3) TEMPORAL FRAMEWORK
+    %% -----------------------------
+    subgraph TempF["Temporal Framework"]
+        C1[Logistic Transform]
+        C2[State Management]
+        C3[Whiff Memory]
     end
 
-    %% Whiff Generation
-    subgraph WhiffGeneration["Whiff Generation"]
-        WG1[Calculate AR2 Parameters] --> WG2[Update in Z-Space]
-        WG2 --> WG3[Apply Inverse Logit]
-        WG3 --> WG4[Add Distance-Dependent Noise]
+    %% -----------------------------
+    %% 4) STATE TRANSITIONS
+    %% -----------------------------
+    subgraph ST["State Transitions"]
+        D1[Prior Probability]
+        D2[Markov Chain]
+        D3[Recent History]
+        D4[Whiff State Decision]
     end
 
-    %% State Management
-    subgraph StateUpdate["State Management"]
-        SU1[Update Histories] --> SU2[Calculate Transition Probabilities]
-        SU2 --> SU3[Apply Markov Chain]
-        SU3 --> SU4[Update Concentrations]
+    %% -----------------------------
+    %% 5) CONCENTRATION EVOLUTION
+    %% -----------------------------
+    subgraph CE["Concentration Evolution"]
+        E1[AR-2 in z-space]
+        E2[Target Concentration]
+        E3[Inverse Transform]
+        E4[Final Concentration]
     end
 
-    %% Linking subgraphs`
-    Main -.- SpatialProbCalc
-    PredictionLoop -.- WhiffGeneration
-    PredictionLoop -.- StateUpdate
+    %% -----------------------------
+    %% FINAL OUTPUT
+    %% -----------------------------
+    F1[Predicted Odor Field]
 
-    
-    Main -.- SpatialProbCalc
-    PredictionLoop -.- WhiffGeneration
-    PredictionLoop -.- StateUpdate
-    
-    classDef main fill:#2d3436,stroke:#dfe6e9,stroke-width:2px
-    classDef process fill:#2c3e50,stroke:#ecf0f1
-    classDef decision fill:#34495e,stroke:#ecf0f1
-    
-    class Main,SpatialProbCalc,PredictionLoop,WhiffGeneration,StateUpdate main
-    class P3 decision
-    class Init,SpatialProb,Predict,Output,SP1,SP2,SP3,SP4,P1,P2,W1,B1,StateUpdate,WG1,WG2,WG3,WG4,SU1,SU2,SU3,SU4 process
+    %% -----------------------------
+    %% MAIN CONNECTIONS
+    %% -----------------------------
+    %% Final Probability Field -> used as "Prior Probability"
+    SPM --> D1       
+
+    %% (e.g. part of config or an additional prior adjustment)
+    TempF --> D1     
+
+    %% State Management updates Recent History
+    C2 --> D3        
+
+    %% Whiff Memory also updates Recent History
+    C3 --> D3        
+
+    %% Prior Probability -> Markov Chain
+    D1 --> D2        
+
+    %% Markov Chain -> Whiff Decision
+    D2 --> D4        
+
+    %% Combined with recent events -> Whiff Decision
+    D3 --> D4        
+
+    %% Logistic Transform used inside AR-2
+    C1 --> E1        
+
+    %% Whiff Decision toggles AR-2 update
+    D4 --> E1        
+
+    E1 --> E2
+    E2 --> E3
+    E3 --> E4
+    E4 --> F1
+
+    %% -----------------------------
+    %% STYLE / COLOR CODING (optional)
+    %% -----------------------------
+    classDef input fill:#f3f4f6,stroke:#1c1c1c,color:#1c1c1c,stroke-width:1px
+    classDef spatial fill:#e8f5e9,stroke:#388e3c,color:#1c1c1c,stroke-width:1px
+    classDef temporal fill:#e3f2fd,stroke:#1976d2,color:#1c1c1c,stroke-width:1px
+    classDef state fill:#ede7f6,stroke:#673ab7,color:#1c1c1c,stroke-width:1px
+    classDef concentration fill:#fff3e0,stroke:#ff6f00,color:#1c1c1c,stroke-width:1px
+    classDef output fill:#f5f5f5,stroke:#aaaaaa,color:#1c1c1c,stroke-width:1px
+
+    class A1,A2,A3 input
+    class B1,B2,B3,B4 spatial
+    class C1,C2,C3 temporal
+    class D1,D2,D3,D4 state
+    class E1,E2,E3,E4 concentration
+    class F1 output
+
+
+    %% -----------------------------
+    %% STYLE / COLOR CODING (optional)
+    %% -----------------------------
+    classDef input fill:#f3f4f6,stroke:#1c1c1c,color:#1c1c1c,stroke-width:1px
+    classDef spatial fill:#e8f5e9,stroke:#388e3c,color:#1c1c1c,stroke-width:1px
+    classDef temporal fill:#e3f2fd,stroke:#1976d2,color:#1c1c1c,stroke-width:1px
+    classDef state fill:#ede7f6,stroke:#673ab7,color:#1c1c1c,stroke-width:1px
+    classDef concentration fill:#fff3e0,stroke:#ff6f00,color:#1c1c1c,stroke-width:1px
+    classDef output fill:#f5f5f5,stroke:#aaaaaa,color:#1c1c1c,stroke-width:1px
+
+    class A1,A2,A3 input
+    class B1,B2,B3,B4 spatial
+    class C1,C2,C3 temporal
+    class D1,D2,D3,D4 state
+    class E1,E2,E3,E4 concentration
+    class F1 output
+
+
