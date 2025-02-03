@@ -2,6 +2,7 @@ import numpy as np
 from scipy.spatial.distance import cdist
 from dataclasses import dataclass
 
+
 def logit(x, lower=0.0, upper=10.0, eps=1e-8):
     x_clamped = np.clip(x, lower + eps, upper - eps)
     scale = upper - lower
@@ -45,13 +46,6 @@ class OdorStateManager:
 
 class ParallelOdorPredictor:
     def __init__(self, fitted_p_heatmap, xedges, yedges, fdf, fdf_nowhiff):
-        """
-        Parameters:
-          - fitted_p_heatmap: the 2D heatmap of whiff probability.
-          - xedges, yedges: edges used to bin space.
-          - fdf: DataFrame with whiff data (mean concentration, std, duration, intermittency, etc.)
-          - fdf_nowhiff: DataFrame with no-whiff background data.
-        """
         self.config = OdorConfig()
         self.fitted_p_heatmap = fitted_p_heatmap
         self.xedges = xedges
@@ -59,16 +53,13 @@ class ParallelOdorPredictor:
         self.fdf = fdf
         self.fdf_nowhiff = fdf_nowhiff
         
-        # Create the persistent state.
         self.state = OdorStateManager(self.config, self.fdf.odor_intermittency.values)
         self.steps_processed = 0
         
-        # For whiff events, store remaining duration. (In the batch code you “fill in” several rows at once.)
+        # For whiff generation
         self.current_whiff_duration = 0
-        self.current_mean = self.config.base_odor_level
-        self.current_std = 0.0
-        
-        # Setup binned data for intermittency generation.
+        self.whiff_values = []
+        self.whiff_index = 0
         self.setup_data()
 
     def setup_data(self):
@@ -104,7 +95,7 @@ class ParallelOdorPredictor:
             if state.recent_history[i]:
                 break
             time_since_whiff += 1
-        scaler = 0.8  # parameter you can adjust
+        scaler = 2  # parameter you can adjust
         time_since_last_whiff = min(1.5, time_since_whiff) if time_since_whiff > 50 else 1.0
         recent_whiff_memory = (1 + num_recent_whiffs * scaler) * time_since_last_whiff
         posterior = ((prior_prob * scaler)
@@ -146,36 +137,55 @@ class ParallelOdorPredictor:
         new_val = 0.85 * (self.config.ar1 * (current - target) + self.config.ar2 * (prev - target)) + target + noise
         return new_val
 
+    def generate_whiff_segment(self, mean_concentration, std_dev, duration_steps):
+        """Generate whiff segment with plateaus and minimal AR(2) variation"""
+        # Create base plateau
+        plateau = np.ones(duration_steps) * mean_concentration
+        
+        # Add small AR(2) variations to make it more natural while maintaining plateau
+        signal = np.zeros(duration_steps)
+        z_current = logit(mean_concentration, 0, 10)
+        z_prev = z_current
+        z_target = z_current
+        
+        for i in range(duration_steps):
+            z_next = self.update_ar2_in_zspace(z_current, z_prev, z_target, 
+                                            distance=0.1,  # Small distance for minimal variation
+                                            base_noise_scale=0.05)  # Reduced noise
+            signal[i] = inv_logit(z_next, 0, 10)
+            z_prev = z_current
+            z_current = z_next
+        
+        # Maintain plateau character while allowing small variations
+        signal = 0.9 * plateau + 0.1 * signal
+        return np.clip(signal, mean_concentration - std_dev * 0.2, 
+                    mean_concentration + std_dev * 0.2).tolist()
+
     def step_update(self, x, y, dt=0.005):
-        """
-        Update odor concentration with more continuous whiff checking and longer durations.
-        """
+        """Step update with AR(2) process for background"""
         self.steps_processed += 1
         if self.steps_processed < self.config.warmup_steps:
             return self.config.base_odor_level
 
         pos = np.array([[x, y]])
-        whiff_locations = self.fdf[['avg_distance_along_streakline','avg_nearest_from_streakline']].values
-        nowhiff_locations = self.fdf_nowhiff[['avg_distance_along_streakline','avg_nearest_from_streakline']].values
+        whiff_locations = self.fdf[['avg_distance_along_streakline',
+                                'avg_nearest_from_streakline']].values
+        nowhiff_locations = self.fdf_nowhiff[['avg_distance_along_streakline',
+                                            'avg_nearest_from_streakline']].values
         
-        # Calculate distances
         dist_whiff = cdist(pos, whiff_locations)[0]
         min_dist = np.min(dist_whiff)
         dist_from_source = np.sqrt(x**2 + y**2)
         
-        # Get spatial probability and posterior
         prior_prob = self.get_spatial_prob(x, y)
         posterior = self.update_whiff_posterior(prior_prob, self.state)
 
-        # Check for new whiff opportunity if not in whiff state or near end of current whiff
         should_check_whiff = (
             not self.state.in_whiff_state or 
-            self.current_whiff_duration <= 5 or
-            min_dist <= self.config.distance_threshold * 0.5  # Check more aggressively when close
+            self.whiff_index >= len(self.current_whiff_values)
         )
         
         if should_check_whiff and min_dist <= self.config.distance_threshold:
-            # Higher chance of maintaining/entering whiff state when close to source
             distance_factor = np.exp(-dist_from_source / 20.0)
             transition_prob = posterior * (1 + distance_factor)
             
@@ -183,60 +193,57 @@ class ParallelOdorPredictor:
                 nearest_idx = np.argmin(dist_whiff)
                 self.state.in_whiff_state = True
                 
-                # Set longer duration for whiffs closer to source
+                mean_concentration = self.fdf.mean_concentration.values[nearest_idx]
+                std_dev = self.fdf.std_whiff.values[nearest_idx]
                 base_duration = self.fdf.length_of_encounter.values[nearest_idx]
+                
                 duration_factor = 1 + 2 * distance_factor
-                duration = int(base_duration * duration_factor * self.config.rows_per_second)
+                duration_steps = int(base_duration * duration_factor * self.config.rows_per_second)
                 
-                # Update whiff parameters
-                self.current_mean = self.fdf.mean_concentration.values[nearest_idx]
-                self.current_std = self.fdf.std_whiff.values[nearest_idx]
-                self.current_whiff_duration = duration
+                # Generate whiff with subtle AR(2) variations
+                whiff_values = self.generate_whiff_segment(mean_concentration, std_dev, duration_steps)
                 
-                # Calculate intermittency with distance-dependent adjustment
+                # Add no-whiff period
                 intermittency = self.generate_intermittency(
                     whiff_locations[nearest_idx, 0],
                     whiff_locations[nearest_idx, 1],
                     self.state
                 )
-                # Shorter intermittency periods when closer to source
-                intermittency *= (1 - 0.5 * distance_factor)
+                blank_duration = int(intermittency * self.config.rows_per_second)
+                
+                # Use AR(2) for no-whiff period
+                blank_values = []
+                current = self.config.base_odor_level
+                prev = current
+                for _ in range(blank_duration):
+                    new_val = self.update_ar2_concentration(
+                        current, prev, self.config.base_odor_level, 0.02
+                    )
+                    blank_values.append(new_val)
+                    prev = current
+                    current = new_val
+                
+                self.current_whiff_values = whiff_values + blank_values
+                self.whiff_index = 0
+                
                 self.state.recent_intermittencies.append(intermittency)
                 self.state.recent_intermittencies.pop(0)
 
-        # Generate concentration based on state
-        if self.state.in_whiff_state and min_dist <= self.config.distance_threshold * 1.2:  # Slightly larger threshold
-            # Whiff concentration generation
-            z_target = logit(self.current_mean, 0, 10)
-            z_next = self.update_ar2_in_zspace(
-                self.state.z_current,
-                self.state.z_prev,
-                z_target,
-                distance=dist_from_source,
-                base_noise_scale=0.15 * self.current_std,
-                jump_prob=0.05
-            )
-            new_concentration = inv_logit(z_next, 0, 10)
-            
-            # Update states
-            self.state.z_prev = self.state.z_current
-            self.state.z_current = z_next
-            self.state.prev_concentration = self.state.current_concentration
-            self.state.current_concentration = new_concentration
-            
-            # Update histories
-            self.state.recent_concentrations.append(new_concentration)
-            self.state.recent_concentrations.pop(0)
-            self.state.recent_history.append(1)
-            self.state.recent_history.pop(0)
-            
-            # Decrement duration and check for whiff end
-            self.current_whiff_duration -= 1
-            if self.current_whiff_duration <= 0:
+        if self.state.in_whiff_state and min_dist <= self.config.distance_threshold * 1.2:
+            if self.whiff_index < len(self.current_whiff_values):
+                new_concentration = self.current_whiff_values[self.whiff_index]
+                self.whiff_index += 1
+                
+                self.state.recent_concentrations.append(new_concentration)
+                self.state.recent_concentrations.pop(0)
+                self.state.recent_history.append(1)
+                self.state.recent_history.pop(0)
+                
+                if self.whiff_index >= len(self.current_whiff_values):
+                    self.state.in_whiff_state = False
+            else:
                 self.state.in_whiff_state = False
-            
-            return new_concentration
-            
+                new_concentration = self.config.base_odor_level
         else:
             # No-whiff background concentration
             nearest_idx = np.argmin(cdist(pos, nowhiff_locations)[0])
@@ -252,9 +259,9 @@ class ParallelOdorPredictor:
             new_concentration = np.clip(new_concentration, 0.6, 1.0)
             
             # Smoothing
-            if self.steps_processed >= 5:
+            if self.steps_processed >= 2:
                 window_data = np.append(self.state.recent_concentrations[-10:], new_concentration)
-                window = np.ones(5) / 5.0
+                window = np.ones(10) / 10.0
                 new_concentration = np.convolve(window_data, window, mode='valid')[-1]
             
             # Update states
@@ -264,5 +271,5 @@ class ParallelOdorPredictor:
             self.state.recent_concentrations.pop(0)
             self.state.recent_history.append(0)
             self.state.recent_history.pop(0)
-            
-            return new_concentration
+        
+        return new_concentration
