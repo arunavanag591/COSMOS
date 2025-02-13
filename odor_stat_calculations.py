@@ -294,6 +294,10 @@ def wd_cal(x_true,y_true, x_pred, y_pred, label1, vmin, vmax):
     # Compute 2D histograms (normalized)
     true_hist, _, _ = np.histogram2d(x_true, y_true, bins=[x_bins, y_bins], density=True)
     pred_hist, _, _ = np.histogram2d(x_pred, y_pred, bins=[x_bins, y_bins], density=True)
+    
+    #Normalize
+    true_hist = true_hist / true_hist.max()
+    pred_hist = pred_hist / pred_hist.max()
 
     # Flatten the histograms for Wasserstein computation
     true_flat = true_hist.flatten()
