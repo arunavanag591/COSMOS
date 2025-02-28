@@ -295,6 +295,9 @@ def wd_cal(x_true,y_true, x_pred, y_pred, label1, vmin, vmax):
     true_hist, _, _ = np.histogram2d(x_true, y_true, bins=[x_bins, y_bins], density=True)
     pred_hist, _, _ = np.histogram2d(x_pred, y_pred, bins=[x_bins, y_bins], density=True)
 
+    true_hist = true_hist / true_hist.max()
+    pred_hist = pred_hist / pred_hist.max()
+
     # Flatten the histograms for Wasserstein computation
     true_flat = true_hist.flatten()
     pred_flat = pred_hist.flatten()
@@ -331,6 +334,8 @@ def plot_wd(bootstrap_distances, observed_wd_2d, p_value, true_hist, pred_hist, 
 
     # Plot 1: Actual data heatmap in blues
     sns.heatmap(true_hist.T, ax=ax1, cmap='Blues', cbar_kws={'label': 'Density'}, vmin=vmin, vmax=vmax, xticklabels=[], yticklabels=[])
+    # sns.heatmap(true_hist.T, ax=ax1, cmap='Blues', cbar_kws={'label': 'Density'}, vmin=vmin, vmax=vmax)
+    
     ax1.invert_yaxis()
     ax1.set_title('Actual Data')
     ax1.set_xlabel('Distance from Source')
@@ -338,6 +343,8 @@ def plot_wd(bootstrap_distances, observed_wd_2d, p_value, true_hist, pred_hist, 
     
     # Plot 2: Predicted data heatmap in reds
     sns.heatmap(pred_hist.T, ax=ax2, cmap='Reds', cbar_kws={'label': 'Density'}, vmin=vmin, vmax=vmax, xticklabels=[], yticklabels=[])
+    # sns.heatmap(pred_hist.T, ax=ax2, cmap='Reds', cbar_kws={'label': 'Density'}, vmin=vmin, vmax=vmax,)
+
     ax2.invert_yaxis()
     ax2.set_title('Predicted Data')
     ax2.set_xlabel('Distance from Source')
