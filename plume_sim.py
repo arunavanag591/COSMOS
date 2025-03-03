@@ -43,7 +43,7 @@ class OdorStateManager:
         self.in_whiff_state = False
         self.state_duration = 0  # How long we have been in the current whiff
 
-class ParallelOdorPredictor:
+class Cosmos:
     def __init__(self, fitted_p_heatmap, xedges, yedges, fdf, fdf_nowhiff):
         """
         Parameters:
@@ -266,3 +266,9 @@ class ParallelOdorPredictor:
             self.state.recent_history.pop(0)
             
             return new_concentration
+        
+
+
+
+
+

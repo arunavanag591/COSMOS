@@ -302,7 +302,7 @@ class Cfd_rigolli_BDCATS:
             time_idx = int(t * self.scale_time)
             self.prefetch(key, time_idx)
         
-        with mp.Pool(processes=mp.cpu_count()-4) as pool:
+        with mp.Pool(processes=1) as pool:
             func = partial(operation, key=key)
             results = pool.map(func, time_steps)
             
