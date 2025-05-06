@@ -27,7 +27,6 @@ def get_st_pos_vector(streakline,pos,i):
     st = [(0-x),(0-y)]
     return st
 
-
 def compute_ysign_encounter(streakline,pos, odor_position):
     if (streakline[pos,1]>odor_position[0][1]):
         # y_sign.append(-1)
@@ -93,25 +92,18 @@ def process_file(folder_path,filename):
     new_df['distance_along_streakline'] = np.sqrt(squared_difference) *  x_sign[::-1]
     new_df['nearest_from_streakline'] = df.nearest_from_streakline * y_sign[::-1]
     new_df['odor']=scale_data(df.odor)
-    # new_df['windx']=df.windx
-    # new_df['windy']=df.windy
-    # new_df['x']=df.x
-    # new_df['y']=df.y
     
     new_df = new_df.iloc[100:]
     new_df.reset_index(drop=True, inplace=True)
     fp='/home/beast/An/data/train_new_axis/'
-    # fp='/home/beast/An/data/Sept13Plumes/plume2/train/'
     new_df.to_hdf(fp + filename, key='data', mode='w')
 
 
 def main():
     folder_path = '/home/beast/An/data/train/'
-    # folder_path= '/home/beast/An/data/Sept13Plumes/plume2/train_backup/'
     all_filenames = [filename for filename in os.listdir(folder_path) if filename.startswith("diag") and filename.endswith(".h5")]
     sorted_filenames = sorted(all_filenames, key=lambda x: int(x[4:-3]))
 
-    # Create a multiprocessing Pool
     pool = Pool(mp.cpu_count()-1)
 
     # Use pool.map to apply the process_file function to each filename
