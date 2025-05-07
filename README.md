@@ -1,6 +1,5 @@
-# Odor Plume Simulator
-Realistic outdoor odor plume simulator 
-
+# COSMOS
+Code base for the paper: "COSMOS: A Data-Driven Probabilistic Time Series Simulator for Chemical Plumes Across Spatial Scales" 
 
 ## Files:
 1. [Training COSMOS Spatial](train.ipynb) : Demonstrates how to train a cosmos spatial model
