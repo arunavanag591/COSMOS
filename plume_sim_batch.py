@@ -38,34 +38,36 @@ class OdorStateManager:
         self.prev_concentration = config.base_odor_level
 
         # For other state logic
-        self.recent_history = [0] * 1000
+        self.recent_history = [0] * config.lookback_history_length
         self.recent_concentrations = [config.base_odor_level] * 10
         self.recent_intermittencies = list(np.random.choice(whiff_intermittency, 5))
         self.in_whiff_state = False
         self.state_duration = 0
+        self.densty_scaler = config.density_scaler
 
 @dataclass
 class OdorConfig:
     rows_per_second: int = 200
     base_odor_level: float = 0.6
     distance_threshold: float = 3
+    density_scaler = 1
     # AR(2) base coefficients
     ar1: float = 0.98
     ar2: float = -0.02
-    warmup_steps: int = 200
+    lookback_history_length: int = 50  # Changed to match the first code
     low_threshold: float = 0.05
     history_length: int = 7
-    # Transition matrix for whiff states
-    transition_matrix: np.ndarray = np.array([[0.15, 0.85],
-                                            [0.15, 0.85]])
+    # Transition prob whiff states
+    whiff_transition_prob=0.85
+    
 
-class ParallelOdorPredictor:
+class COSMOSBatch:
     def __init__(self, fitted_p_heatmap, xedges, yedges, fdf, fdf_nowhiff, test_locations):
         self.config = OdorConfig()
         self.fdf = fdf
         self.fdf_nowhiff = fdf_nowhiff
         self.test_locations = test_locations
-        self.fitted_p_heatmap = fitted_p_heatmap
+        self.fitted_p_heatmap = fitted_p_heatmap * self.config.density_scaler
         self.xedges = xedges
         self.yedges = yedges
         self.setup_data()
@@ -145,7 +147,7 @@ class ParallelOdorPredictor:
         recent_whiff_memory = (1 + (num_recent_whiffs) * scaler) * time_since_last_whiff
                 
         posterior = ((prior_prob * scaler)
-                    * self.config.transition_matrix[whiff_state][1]
+                    * self.config.whiff_transition_prob
                     * recent_whiff_memory)
         
         return posterior
@@ -159,34 +161,69 @@ class ParallelOdorPredictor:
 
     def update_ar2_in_zspace(self, z_current: float, z_prev: float,
                             z_target: float, distance: float,
-                            base_noise_scale: float = 0.1,
+                            std_dev_whiff: float,
                             jump_prob: float = 0.05) -> float:
-        distance_factor = np.exp(-distance / 50.0)  # decays with distance
-
-        # Possibly adjust AR(1), AR(2), etc. coefficients
+        """
+        Perform an AR(2)-like update with the empirical WSD properly converted to logit space.
+        
+        Parameters:
+        -----------
+        z_current, z_prev: Current and previous states in logit space
+        z_target: Target value in logit space
+        distance: Distance from source
+        std_dev_whiff: The empirically measured standard deviation in concentration space
+        jump_prob: Probability of adding a larger jump to the noise
+        """
+        # Distance factor still useful for modulating overall dynamics
+        distance_factor = np.exp(-distance / 50.0)  
+        
+        # Adjust AR coefficients based on distance
         ar1_local = self.config.ar1 * (1 + 0.1 * distance_factor)
         ar2_local = self.config.ar2 * (1 - 0.1 * distance_factor)
         
-        # Base random noise
-        noise = base_noise_scale * (1 + 2 * distance_factor) * np.random.randn()
+        # Convert target to concentration space
+        target_concentration = inv_logit(z_target, 0, 10)
+        
+        # Use the empirical WSD to define bounds in concentration space
+        upper_bound = min(target_concentration + std_dev_whiff, 9.9)
+        lower_bound = max(target_concentration - std_dev_whiff, 0.1)
+        
+        # Convert these bounds to logit space
+        z_upper = logit(upper_bound, 0, 10)
+        z_lower = logit(lower_bound, 0, 10)
+        
+        # The standard deviation in logit space 
+        z_std = (z_upper - z_lower) / 2.0
+        
+        # Apply distance factor to modulate variability
+        # Higher variability near source, lower far away
+        effective_std = z_std * (1.0 + distance_factor)
+        
+        # Generate noise in logit space
+        noise = effective_std * np.random.randn()
         
         # Optional "jumps"
         if np.random.rand() < jump_prob:
-            jump_size = np.random.uniform(-1, 1) * base_noise_scale * 3
+            jump_size = np.random.uniform(-1, 1) * effective_std * 2
             noise += jump_size
 
         # AR(2) update in unbounded space
         z_next = 0.85 * (ar1_local * (z_current - z_target)
-                         + ar2_local * (z_prev - z_target)) \
-                 + z_target + noise
+                        + ar2_local * (z_prev - z_target)) \
+                + z_target + noise
 
         return z_next
 
     def process_segment(self, start_idx: int, end_idx: int,
-                       state: OdorStateManager) -> Tuple[np.ndarray, np.ndarray]:
+                       state: OdorStateManager) -> Tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
         locations_segment = self.test_locations[start_idx:end_idx]
+        
+        # Add arrays for all outputs including intermediate values
         concentrations = np.full(len(locations_segment), self.config.base_odor_level)
         predictions = np.zeros(len(locations_segment), dtype=int)
+        logistic_transforms = np.zeros(len(locations_segment))
+        ar2_outputs = np.zeros(len(locations_segment))
+        target_concentrations = np.zeros(len(locations_segment))
 
         test_locations = locations_segment
         whiff_locations = self.fdf[['avg_distance_along_streakline','avg_nearest_from_streakline']].values
@@ -201,7 +238,7 @@ class ParallelOdorPredictor:
 
         i = 0
         while i < len(locations_segment):
-            if start_idx + i < self.config.warmup_steps:
+            if start_idx + i < self.config.lookback_history_length:
                 i += 1
                 continue
 
@@ -233,12 +270,24 @@ class ParallelOdorPredictor:
 
                 for j in range(rows_to_fill):
                     dist_here = distances_from_source[i + j] if (i+j) < len(distances_from_source) else 0
+                    
+                    # Save target concentration
+                    target_concentrations[i+j] = mean_concentration
+                    
+                    # Save logistic transform
+                    logistic_transforms[i+j] = z_target
+                    
+                    # Use new AR(2) method with proper WSD transformation
                     z_next = self.update_ar2_in_zspace(
                         state.z_current, state.z_prev, z_target,
                         distance=dist_here,
-                        base_noise_scale=0.15 * std_dev_whiff,
+                        std_dev_whiff=std_dev_whiff,
                         jump_prob=0.05
                     )
+                    
+                    # Save AR(2) output
+                    ar2_outputs[i+j] = z_next
+                    
                     odor_next = inv_logit(z_next, 0, 10)
 
                     state.z_prev = state.z_current
@@ -270,6 +319,13 @@ class ParallelOdorPredictor:
                 no_whiff_mean = self.fdf_nowhiff.wc_nowhiff.values[nearest_idx]
                 no_whiff_std = self.fdf_nowhiff.wsd_nowhiff.values[nearest_idx]
                 
+                # Save target concentration for no-whiff state
+                target_concentrations[i] = no_whiff_mean
+                
+                # Save logistic transform
+                logistic_transforms[i] = logit(no_whiff_mean, 0, 10)
+                
+                # For non-whiff states, keep the original approach
                 new_concentration = self.update_ar2_concentration(
                     state.current_concentration,
                     state.prev_concentration,
@@ -277,6 +333,9 @@ class ParallelOdorPredictor:
                     0.05 * no_whiff_std
                 )
                 new_concentration = np.clip(new_concentration, 0.6, 1.0)
+                
+                # Save AR(2) output
+                ar2_outputs[i] = logit(new_concentration, 0, 10)
                 
                 if i >= 10:
                     window_data = concentrations[i-10:i]
@@ -295,49 +354,67 @@ class ParallelOdorPredictor:
                 
                 i += 1
 
-        return concentrations, predictions
+        return concentrations, predictions, logistic_transforms, ar2_outputs, target_concentrations
 
     def predict(self) -> Dict[str, np.ndarray]:
-            segment_size = 2000
-            total_segments = (
-                len(self.test_locations) // segment_size +
-                (1 if len(self.test_locations) % segment_size else 0)
-            )
+        segment_size = 2000
+        total_segments = (
+            len(self.test_locations) // segment_size +
+            (1 if len(self.test_locations) % segment_size else 0)
+        )
 
-            all_concentrations = []
-            all_predictions = []
+        all_concentrations = []
+        all_predictions = []
+        all_logistic_transforms = []
+        all_ar2_outputs = []
+        all_target_concentrations = []
 
-            # Create the state manager
-            state = OdorStateManager(self.config, self.fdf.odor_intermittency.values)
+        # Create the state manager
+        state = OdorStateManager(self.config, self.fdf.odor_intermittency.values)
 
-            for seg_idx in range(total_segments):
-                start_idx = seg_idx * segment_size
-                end_idx = min((seg_idx + 1) * segment_size, len(self.test_locations))
+        for seg_idx in range(total_segments):
+            start_idx = seg_idx * segment_size
+            end_idx = min((seg_idx + 1) * segment_size, len(self.test_locations))
 
-                concentrations, predictions = self.process_segment(start_idx, end_idx, state)
-                all_concentrations.append(concentrations)
-                all_predictions.append(predictions)
+            concentrations, predictions, logistic_transforms, ar2_outputs, target_concentrations = self.process_segment(
+                start_idx, end_idx, state)
+                
+            all_concentrations.append(concentrations)
+            all_predictions.append(predictions)
+            all_logistic_transforms.append(logistic_transforms)
+            all_ar2_outputs.append(ar2_outputs)
+            all_target_concentrations.append(target_concentrations)
 
-            # Concatenate results
-            final_concentrations = np.concatenate(all_concentrations)
-            final_predictions = np.concatenate(all_predictions)
-            final_concentrations = gaussian_filter(final_concentrations, sigma=0.8)
+        # Concatenate results
+        final_concentrations = np.concatenate(all_concentrations)
+        final_predictions = np.concatenate(all_predictions)
+        final_logistic_transforms = np.concatenate(all_logistic_transforms)
+        final_ar2_outputs = np.concatenate(all_ar2_outputs)
+        final_target_concentrations = np.concatenate(all_target_concentrations)
+        
+        final_concentrations = gaussian_filter(final_concentrations, sigma=0.8)
 
-            return {
-                'concentrations': final_concentrations,
-                'predictions': final_predictions
-            }
+        # Return both the original dictionary format and the additional intermediate values
+        return {
+            'concentrations': final_concentrations,
+            'predictions': final_predictions,
+            'logistic_transform': final_logistic_transforms,
+            'ar2_output': final_ar2_outputs,
+            'target_concentration': final_target_concentrations
+        }
 
-def main(fitted_p_heatmap,xedges,yedges,fdf,fdf_nowhiff, test_locations):
-    predictor = ParallelOdorPredictor(
-        fitted_p_heatmap=fitted_p_heatmap,
-        xedges=xedges,
-        yedges=yedges,
-        fdf=fdf,
-        fdf_nowhiff=fdf_nowhiff,
-        test_locations=test_locations
-    )
-    return predictor.predict()
+    def main(fitted_p_heatmap, xedges, yedges, fdf, fdf_nowhiff, test_locations):
+        predictor = COSMOSBatch(
+            fitted_p_heatmap=fitted_p_heatmap,
+            xedges=xedges,
+            yedges=yedges,
+            fdf=fdf,
+            fdf_nowhiff=fdf_nowhiff,
+            test_locations=test_locations
+        )
+        return predictor.predict()
+
+
 
 # if __name__ == "__main__":
 #     dirname = '../data/simulator/rigolli/'
