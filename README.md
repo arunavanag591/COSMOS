@@ -18,6 +18,7 @@ Below is a graphical representation of how the algorithm works.
    pip install figurefirst
    pip install tables
    pip install POT
+   pip install tsfresh
    ``` 
 
 2. To install requirements:
@@ -25,6 +26,14 @@ Below is a graphical representation of how the algorithm works.
     ```
     pip install -r requirements.txt
     ```
+3. To visualize the figures and see the results and calculations, you will need to install the following:
+
+    * [FlyPlotLib](https://github.com/florisvb/FlyPlotLib)
+    * [FigureFirst](https://github.com/FlyRanch/figurefirst)
+    * [Inkscape 1.2](https://inkscape.org/release/inkscape-1.2/)
+
+Follow the setup of [FigureFirst](https://github.com/FlyRanch/figurefirst) into inkscape.
+
 
 ## Files:
 ### Training
@@ -39,9 +48,9 @@ Below is a graphical representation of how the algorithm works.
 5. [Helper for CFD methods](cfd_rigolli.py)
 6. [Helper for odor statistics Calculation](odor_stat_calculations.py)
 
-### Pre-trained Models and Data
+### Pre-trained Models and Data and Figure svgs
 
-Data is available [here](data/).
+All data, trained models and figures are available for download from [data dryad](http://datadryad.org/share/6ahtoddnVD7c3Tj2zKHLjVn3GTtAj-W6zqIYu9udpL4). Please place the folder `data` and `svgs` to in the home folder of COSMOS to run all scripts.
 
 ## Results
 
