@@ -1,15 +1,60 @@
-# COSMOS
-Code base for the paper: "COSMOS: A Data-Driven Probabilistic Time Series Simulator for Chemical Plumes Across Spatial Scales" 
+# COSMOS: A Data-Driven Probabilistic Time Series Simulator for Chemical Plumes Across Spatial Scales
+The development of robust odor navigation strategies for automated environmental monitoring applications requires realistic simulations of odor time series for agents moving across large spatial scales. Traditional approaches that rely on computational fluid dynamics (CFD) methods can capture the spatiotemporal dynamics of odor plumes, but are impractical for large-scale simulations due to their computational expense. On the other hand, puff-based simulations, although computationally tractable for large scales and capable of capturing the stochastic nature of plumes, fail to reproduce naturalistic odor statistics. Here, we present COSMOS (Configurable Odor Simulation Model over Scalable Spaces), a data-driven probabilistic framework that synthesizes realistic odor time series from spatial and temporal features of real datasets. COSMOS generates similar distributions of key statistical features such as whiff frequency, duration, and concentration as observed in real data, while dramatically reducing computational overhead. By reproducing critical statistical properties across a variety of flow regimes and scales, COSMOS enables the development and evaluation of agent-based navigation strategies with naturalistic odor experiences. To demonstrate its utility, we compare odor-tracking agents exposed to CFD-generated plumes versus COSMOS simulations, showing that both their odor experiences and resulting behaviors are quite similar.
+
+Below is a graphical representation of how the algorithm works. 
+![COSMOS](figure/algorithm.jpg)
+
+
+## Requirements
+1. Install Packages:
+
+   ```
+   pip install pandas
+   pip install h5py
+   pip install numpy
+   pip install matplotlib
+   pip install figurefirst
+   pip install tables
+   pip install POT
+   ``` 
+
+2. To install requirements:
+
+    ```
+    pip install -r requirements.txt
+    ```
 
 ## Files:
+### Training
 1. [Training COSMOS Spatial](train.ipynb) : Demonstrates how to train a cosmos spatial model
+### Testing/Evaluation
 2. [Testing Trajectory with COSMOS](test.ipynb) : Demonstration of how to use the spatial model and test a trajectory using the cosmos algorithm
+### Agent Based Tracking
 3. [Agent Based Tracking](agent_tracking.ipynb) : Surge and Cast implementation using COSMOS and CFD [Rigolli](https://elifesciences.org/articles/72196) for odor experience.
 4. [Agent Tracking trajectory comparison](trajectory_comparison.ipynb) : Agent based tracking using COSMOS and CFD, trajectory comparison and timing diagram
 5. [COSMOS Algorithm for testing Trajectories](cosmos_batch.py)
 6. [COSMOS Algorithm for use with agent tracking](cosmos_tracking.py)
 5. [Helper for CFD methods](cfd_rigolli.py)
 6. [Helper for odor statistics Calculation](odor_stat_calculations.py)
+
+### Pre-trained Models and Data
+
+Data is available [here](data/).
+
+## Results
+
+Our algorithm achieved similar outdoor statistical distribution, with a high wasserstein p-value. Below are results for dataset from desert with windspeed ranging between 3.5m/s to 6m/s (HWS).
+
+| Whiff Statistics                  | Wasserstein Distance (p-value) |
+|-----------------------------------|-------------------------------:|
+| Whiff Duration (s)                |                           0.9 |
+| Whiff Frequency (Hz)              |                           0.6 |
+| Whiff Concentration (a.u.)        |                           0.7 |
+| Whiff Standard Deviation (a.u.)   |                           0.5 |
+| Whiff Moving Average (a.u.)       |                           0.6 |
+
+Below is the result figure:
+![Result](figure/results_hws.jpg "HWS Template Dataset Results")
 
 
 ## Figures
@@ -28,6 +73,4 @@ Code base for the paper: "COSMOS: A Data-Driven Probabilistic Time Series Simula
 1. [Figure 5](figure/results_lws.ipynb) : COSMOS results on HWS desert data
 2. [Figure 6](figure/results_forest.ipynb) : COSMOS results on HWS desert data
 3. [Figure 7](figure/S1.ipynb) : Binning of whiff statistics, in depth flow diagram for concentration modeling and intermittency modeling.
-
-
 
