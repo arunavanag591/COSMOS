@@ -45,19 +45,9 @@ Data is available [here](data/).
 
 ## Results
 
-Our algorithm achieved similar outdoor statistical distribution, with a high wasserstein p-value. Below are results for dataset from desert with windspeed ranging between 3.5m/s to 6m/s (HWS).
-
-| Whiff Statistics                  | Wasserstein Distance (p-value) |
-|-----------------------------------|-------------------------------:|
-| Whiff Duration (s)                |                           0.9 |
-| Whiff Frequency (Hz)              |                           0.6 |
-| Whiff Concentration (a.u.)        |                           0.7 |
-| Whiff Standard Deviation (a.u.)   |                           0.5 |
-| Whiff Moving Average (a.u.)       |                           0.6 |
-
-Below is the result figure:
+Our algorithm achieved similar outdoor statistical distribution, with a high wasserstein p-value. Below are results for dataset from desert with windspeed ranging between 3.5m/s to 6m/s (HWS). Below is the result figure:
 ![Result](figure/results_hws.jpg "HWS Template Dataset Results")
-
+The result can be reproduced using this [script](figure/results_hws.ipynb).
 
 ## Figures
 
