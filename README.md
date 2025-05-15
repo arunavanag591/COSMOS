@@ -45,7 +45,7 @@ Data is available [here](data/).
 
 ## Results
 
-Our algorithm achieved similar outdoor statistical distribution, with a high wasserstein p-value. Below are results for dataset from desert with windspeed ranging between 3.5m/s to 6m/s (HWS). Below is the result figure:
+Our algorithm achieved similar outdoor statistical distribution, with a high observed wasserstein distance (higher p value representing more similarity). Below are results for desert dataset which had a windspeed ranging between 3.5m/s to 6m/s (HWS). Below is the result figure:
 ![Result](figure/results_hws.jpg "HWS Template Dataset Results")
 The result can be reproduced using this [script](figure/results_hws.ipynb).
 
