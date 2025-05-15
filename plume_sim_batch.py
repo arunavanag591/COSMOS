@@ -38,34 +38,36 @@ class OdorStateManager:
         self.prev_concentration = config.base_odor_level
 
         # For other state logic
-        self.recent_history = [0] * 1000
+        self.recent_history = [0] * config.lookback_history_length
         self.recent_concentrations = [config.base_odor_level] * 10
         self.recent_intermittencies = list(np.random.choice(whiff_intermittency, 5))
         self.in_whiff_state = False
         self.state_duration = 0
+        self.densty_scaler = config.density_scaler
 
 @dataclass
 class OdorConfig:
     rows_per_second: int = 200
     base_odor_level: float = 0.6
     distance_threshold: float = 3
+    density_scaler = 1
     # AR(2) base coefficients
     ar1: float = 0.98
     ar2: float = -0.02
-    warmup_steps: int = 1000  # Changed to match the first code
+    lookback_history_length: int = 50  # Changed to match the first code
     low_threshold: float = 0.05
     history_length: int = 7
-    # Transition matrix for whiff states
-    transition_matrix: np.ndarray = np.array([[0.15, 0.85],
-                                            [0.15, 0.85]])
+    # Transition prob whiff states
+    whiff_transition_prob=0.85
+    
 
-class COSMOS:
+class COSMOSBatch:
     def __init__(self, fitted_p_heatmap, xedges, yedges, fdf, fdf_nowhiff, test_locations):
         self.config = OdorConfig()
         self.fdf = fdf
         self.fdf_nowhiff = fdf_nowhiff
         self.test_locations = test_locations
-        self.fitted_p_heatmap = fitted_p_heatmap
+        self.fitted_p_heatmap = fitted_p_heatmap * self.config.density_scaler
         self.xedges = xedges
         self.yedges = yedges
         self.setup_data()
@@ -145,7 +147,7 @@ class COSMOS:
         recent_whiff_memory = (1 + (num_recent_whiffs) * scaler) * time_since_last_whiff
                 
         posterior = ((prior_prob * scaler)
-                    * self.config.transition_matrix[whiff_state][1]
+                    * self.config.whiff_transition_prob
                     * recent_whiff_memory)
         
         return posterior
@@ -236,7 +238,7 @@ class COSMOS:
 
         i = 0
         while i < len(locations_segment):
-            if start_idx + i < self.config.warmup_steps:
+            if start_idx + i < self.config.lookback_history_length:
                 i += 1
                 continue
 
@@ -330,7 +332,7 @@ class COSMOS:
                     no_whiff_mean,
                     0.05 * no_whiff_std
                 )
-                new_concentration = np.clip(new_concentration, 0.6, 1.0)
+                new_concentration = np.clip(new_concentration, 0,0.1)
                 
                 # Save AR(2) output
                 ar2_outputs[i] = logit(new_concentration, 0, 10)
@@ -402,7 +404,7 @@ class COSMOS:
         }
 
     def main(fitted_p_heatmap, xedges, yedges, fdf, fdf_nowhiff, test_locations):
-        predictor = COSMOS(
+        predictor = COSMOSBatch(
             fitted_p_heatmap=fitted_p_heatmap,
             xedges=xedges,
             yedges=yedges,
