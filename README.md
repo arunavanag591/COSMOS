@@ -50,7 +50,7 @@ Follow the setup of [FigureFirst](https://github.com/FlyRanch/figurefirst) into 
 
 ### Pre-trained Models and Data and Figure svgs
 
-All data, trained models and figures are available for download from [data dryad](http://datadryad.org/share/6ahtoddnVD7c3Tj2zKHLjVn3GTtAj-W6zqIYu9udpL4). Please place the folder `data` and `svgs` to in the home folder of COSMOS to run all scripts.
+All data, trained models and figures are available for download from [data dryad](http://datadryad.org/share/6ahtoddnVD7c3Tj2zKHLjVn3GTtAj-W6zqIYu9udpL4). Please place the folder `data` and `svgs` to in the home folder of COSMOS to run all scripts. Rigolli's data can be found [here](10.5281/zenodo.6538176), download and place `coordinates.mat`, `crosswind_v.mat`, `downwind_v.mat`, `ground_data.mat`, `nose_data.mat`, `vertical_v.mat`, in the `data/rigolli` location.
 
 ## Results
 
