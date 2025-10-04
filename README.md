@@ -28,7 +28,39 @@ This repository is dedicated to the public domain under CC0 1.0 Universal.
     ```
     pip install -r requirements.txt
     ```
-3. To visualize the figures and see the results and calculations, you will need to install the following:
+
+3. **Data Setup (Required):**
+
+   All data, trained models and figures are available for download from [data dryad](http://datadryad.org/share/6ahtoddnVD7c3Tj2zKHLjVn3GTtAj-W6zqIYu9udpL4). Please place the folder `data` and `svgs` in the home folder of COSMOS to run all scripts. 
+   
+   Rigolli's data can be found [here](https://zenodo.org/records/15469831), download and place `coordinates.mat`, `crosswind_v.mat`, `downwind_v.mat`, `ground_data.mat`, `nose_data.mat`, `vertical_v.mat`, in the `data/rigolli` location.
+
+   **After setup, your directory should look like:**
+   ```
+   COSMOS/
+   ├── cosmos/              # Package code
+   ├── data/               # Downloaded from Dryad
+   │   ├── hws/
+   │   ├── lws/  
+   │   ├── forest/
+   │   └── rigolli/        # Additional files from Zenodo
+   └── svgs/               # Downloaded from Dryad
+   ```
+
+4. **For Package Usage (Simplified Interface):**
+
+   ```bash
+   pip install -e .  # Install COSMOS as package
+   ```
+   
+   Then use the simplified interface:
+   ```python
+   import cosmos
+   model = cosmos.predictor('desert-hws')
+   concentration = model.step_update(1.0, 0.5)
+   ```
+
+5. To visualize the figures and see the results and calculations, you will need to install the following:
 
     * [FlyPlotLib](https://github.com/florisvb/FlyPlotLib)
     * [FigureFirst](https://github.com/FlyRanch/figurefirst)

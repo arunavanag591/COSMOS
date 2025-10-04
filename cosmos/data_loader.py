@@ -45,7 +45,7 @@ MODEL_CONFIGS = {
 }
 
 def get_data_directory():
-    """Get the data directory path, trying both package and development locations."""
+    """Get the data directory path, trying multiple locations."""
     current_dir = Path(__file__).parent
     
     # Try package location first (when installed)
@@ -58,9 +58,26 @@ def get_data_directory():
     if dev_data_dir.exists():
         return dev_data_dir
     
+    # Try user's home directory (downloaded data)
+    home_data_dir = Path.home() / ".cosmos" / "data"
+    if home_data_dir.exists():
+        return home_data_dir
+    
     raise FileNotFoundError(
-        "Could not find data directory. "
-        "Please ensure the COSMOS data is available in the package or repository."
+        "COSMOS data not found. Please download the data from Dryad and place it in the COSMOS directory:\n\n"
+        "1. Download data from: http://datadryad.org/share/6ahtoddnVD7c3Tj2zKHLjVn3GTtAj-W6zqIYu9udpL4\n"
+        "2. Extract and place the 'data' folder in the COSMOS home directory\n"
+        "3. For Rigolli data, also download from: https://zenodo.org/records/15469831\n"
+        "   and place coordinates.mat, crosswind_v.mat, downwind_v.mat, ground_data.mat,\n"
+        "   nose_data.mat, vertical_v.mat in the data/rigolli/ location\n\n"
+        "After setup, your directory should look like:\n"
+        "COSMOS/\n"
+        "├── cosmos/          # Package code\n"
+        "└── data/           # Downloaded data\n"
+        "    ├── hws/\n"
+        "    ├── lws/\n" 
+        "    ├── forest/\n"
+        "    └── rigolli/\n"
     )
 
 def list_available_models():

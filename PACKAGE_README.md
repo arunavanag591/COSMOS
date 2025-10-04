@@ -36,15 +36,36 @@ import cosmos
 model = cosmos.predictor('desert-hws')
 ```
 
-## 📦 Quick Start
+## 📦 Installation & Setup
 
-Install the package:
-
+### Step 1: Install Package
 ```bash
-pip install cosmos-odor
+git clone https://github.com/arunavanag591/COSMOS.git
+cd COSMOS
+pip install -e .
 ```
 
-Use in just a few lines:
+### Step 2: Download Data 
+**Required:** Download data from [Dryad](http://datadryad.org/share/6ahtoddnVD7c3Tj2zKHLjVn3GTtAj-W6zqIYu9udpL4)
+
+1. Extract the downloaded data 
+2. Place the `data` folder in the COSMOS directory
+3. For Rigolli model: Download additional files from [Zenodo](https://zenodo.org/records/15469831)
+4. Place Rigolli files (`coordinates.mat`, `crosswind_v.mat`, etc.) in `data/rigolli/`
+
+**Your directory should look like:**
+```
+COSMOS/
+├── cosmos/          # Package code  
+├── data/           # Downloaded from Dryad
+│   ├── hws/
+│   ├── lws/
+│   ├── forest/
+│   └── rigolli/    # Additional files from Zenodo
+└── README.md
+```
+
+### Step 3: Use the Simplified Interface
 
 ```python
 import cosmos
