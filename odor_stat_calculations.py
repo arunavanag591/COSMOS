@@ -9,7 +9,7 @@ pd.TimeSeries = pd.Series
 from itertools import groupby
 from operator import itemgetter
 import matplotlib.pyplot as plt 
-import ot
+# import ot
 
 #math
 import numpy as np

@@ -1,0 +1,26 @@
+include README.md
+include PACKAGE_README.md
+include LICENSE
+include requirements.txt
+include pyproject.toml
+include setup.py
+
+# Include all package source files
+recursive-include cosmos *.py
+
+# Include all data files
+recursive-include cosmos/data *.npz
+recursive-include cosmos/data *.h5
+recursive-include cosmos/data *.hdf5
+recursive-include cosmos/data *.mat
+
+# Include examples
+include ultra_minimal_example.py
+include example_minimal.py
+
+# Exclude cache and build files
+global-exclude __pycache__
+global-exclude *.py[co]
+global-exclude .DS_Store
+global-exclude *.so
+global-exclude .git*

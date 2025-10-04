@@ -1,0 +1,57 @@
+[build-system]
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "cosmos-odor"
+version = "1.0.0"
+description = "A Data-Driven Probabilistic Time Series Simulator for Chemical Plumes"
+readme = "README.md"
+requires-python = ">=3.8"
+license = {text = "CC0-1.0"}
+authors = [
+    {name = "Aruna Nag", email = "arunavanag591@github.com"},
+]
+keywords = ["odor", "simulation", "chemical plumes", "environmental monitoring", "agent-based modeling"]
+classifiers = [
+    "Development Status :: 5 - Production/Stable",
+    "Intended Audience :: Science/Research",
+    "Topic :: Scientific/Engineering :: Artificial Intelligence",
+    "Topic :: Scientific/Engineering :: Physics",
+    "License :: CC0 1.0 Universal (CC0 1.0) Public Domain Dedication",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+]
+dependencies = [
+    "numpy>=1.20.0",
+    "pandas>=1.3.0",
+    "scipy>=1.7.0",
+    "numba>=0.56.0",
+    "h5py>=3.0.0",
+]
+
+[project.optional-dependencies]
+visualization = [
+    "matplotlib>=3.5.0",
+]
+dev = [
+    "pytest>=6.0",
+    "black",
+    "flake8",
+]
+
+[project.urls]
+Homepage = "https://github.com/arunavanag591/COSMOS"
+Documentation = "https://github.com/arunavanag591/COSMOS/blob/paper/README.md"
+Repository = "https://github.com/arunavanag591/COSMOS.git"
+Issues = "https://github.com/arunavanag591/COSMOS/issues"
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["cosmos*"]
+
+[tool.setuptools.package-data]
+cosmos = ["data/**/*"]
