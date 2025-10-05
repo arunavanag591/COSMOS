@@ -71,17 +71,31 @@ Follow the setup of [FigureFirst](https://github.com/FlyRanch/figurefirst) into 
 
 
 ## Files:
-### Training
-1. [Training COSMOS Spatial](train.ipynb) : Demonstrates how to train a cosmos spatial model
-### Testing/Evaluation
-2. [Testing Trajectory with COSMOS](test.ipynb) : Demonstration of how to use the spatial model and test a trajectory using the cosmos algorithm
-### Agent Based Tracking
-3. [Agent Based Tracking](agent_tracking.ipynb) : Surge and Cast implementation using COSMOS and CFD [Rigolli](https://elifesciences.org/articles/72196) for odor experience.
-4. [Agent Tracking trajectory comparison](trajectory_comparison.ipynb) : Agent based tracking using COSMOS and CFD, trajectory comparison and timing diagram
-5. [COSMOS Algorithm for testing Trajectories](cosmos_batch.py)
-6. [COSMOS Algorithm for use with agent tracking](cosmos_tracking.py)
-5. [Helper for CFD methods](cfd_rigolli.py)
-6. [Helper for odor statistics Calculation](odor_stat_calculations.py)
+
+### Example Notebooks & Scripts
+
+#### Minimal Usage & API Demos
+- [Minimal Example Notebook](cosmos_minimal_example.ipynb): Jupyter notebook showing minimal usage of the COSMOS package and API.
+- [Minimal Example (script)](example_minimal.py): Python script for the simplest possible COSMOS usage.
+
+
+#### Training & Evaluation
+- [Training COSMOS Spatial](train_model.ipynb): How to train a COSMOS spatial model (if present).
+- [Testing Trajectory with COSMOS](test_model.ipynb): Test a trajectory using the COSMOS algorithm (if present).
+
+#### Agent-Based Tracking & Analysis
+- [Agent Based Tracking](agent_tracking.ipynb): Surge and cast implementation using COSMOS and CFD [Rigolli](https://elifesciences.org/articles/72196) for odor experience.
+- [Agent Tracking Trajectory Comparison](trajectory_comparison.ipynb): Compare agent-based tracking using COSMOS and CFD, including timing diagrams.
+- [COSMOS Batch Algorithm](cosmos_batch.py): Batch testing of trajectories with COSMOS.
+- [COSMOS Tracking Algorithm](cosmos_tracking.py): Algorithm for use with agent tracking.
+- [Helper for CFD Methods](cfd_rigolli.py): Utilities for working with CFD (Rigolli) data.
+- [Helper for Odor Statistics Calculation](odor_stat_calculations.py): Scripts for odor statistics calculations.
+
+#### Figures & Visualization
+- [Algorithm Figure Notebook](figure/algorithm_figure_v3.ipynb): Generates the main algorithm figure.
+- [Results Notebooks](figure/results_hws.ipynb), [results_lws.ipynb](figure/results_lws.ipynb), [results_forest.ipynb](figure/results_forest.ipynb), [results_rigolli.ipynb](figure/results_rigolli.ipynb): Notebooks for reproducing results figures.
+- [Tracking Results Notebook](figure/results_trackingv1.ipynb): Agent-based tracking results and comparison.
+- [Supplemental Figure Notebook](figure/S1.ipynb): Supplemental analysis and flow diagrams.
 
 ### Pre-trained Models and Data and Figure svgs
 
