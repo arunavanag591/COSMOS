@@ -6,7 +6,7 @@
 
 COSMOS (Configurable Odor Simulation Model over Scalable Spaces) is a Python package for realistic odor time series simulation. This package provides a dramatically simplified interface for real-time odor concentration prediction across different environments.
 
-## 🚀 Ultra-Simple Interface
+## 🚀 Simple Interface
 
 **Before (16+ lines of complex setup):**
 ```python
