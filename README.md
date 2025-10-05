@@ -59,6 +59,7 @@ This repository is dedicated to the public domain under CC0 1.0 Universal.
    model = cosmos.predictor('desert-hws')
    concentration = model.step_update(1.0, 0.5)
    ```
+   Refer [Usage](PACKAGE_README.md) for more details.
 
 5. To visualize the figures and see the results and calculations, you will need to install the following:
 

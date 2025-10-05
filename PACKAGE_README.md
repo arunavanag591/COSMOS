@@ -164,11 +164,13 @@ pip install -e .
 If you use COSMOS in your research, please cite:
 
 ```bibtex
-@article{cosmos2024,
-  title={COSMOS: A Data-Driven Probabilistic Time Series Simulator for Chemical Plumes Across Spatial Scales},
-  author={Nag, Aruna and others},
-  year={2024}
+@article{nag2025cosmos,
+  title={COSMOS: A Data-Driven Probabilistic Time Series simulator for Chemical Plumes across Spatial Scales},
+  author={Nag, Arunava and van Breugel, Floris},
+  journal={arXiv preprint arXiv:2505.22436},
+  year={2025}
 }
+
 ```
 
 ## License
